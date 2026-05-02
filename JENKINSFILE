@@ -60,7 +60,7 @@ pipeline {
                                 set FLASK_APP=app\\api.py
                                 set FLASK_ENV=development
                                 start flask run
-                                C:\\Users\\josor\\DevOps\\apache-jmeter-5.6.3\\apache-jmeter-5.6.3\\bin\\jmeter -n -t test\\jmeter\\sumaresta.jmx -l flask.jtl
+                                C:\\Users\\josor\\DevOps\\apache-jmeter-5.6.3\\apache-jmeter-5.6.3\\bin\\jmeter -n -t test\\jmeter\\flask.jmx -l flask.jtl
                             '''
 
                             perfReport(
