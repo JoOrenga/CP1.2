@@ -2,12 +2,7 @@ pipeline {
     agent { label 'wd1' }
 
     stages {
-        stage('Get Code') {
-            steps {
-                git 'https://github.com/anieto-unir/helloworld.git'
-            }
-        }
-
+        
         stage('Tests') {
             parallel {
                 stage('Unit') {
