@@ -1,106 +1,97 @@
 pipeline {
-    agent {label 'wd1'}
+    agent { label 'wd1' }
 
-        stages {
-            stage('Get Code') {
-                steps {
-                    // Obtener código del repo
-                    git 'https://github.com/anieto-unir/helloworld.git'
+    stages {
+        stage('Get Code') {
+            steps {
+                git 'https://github.com/anieto-unir/helloworld.git'
+            }
+        }
+
+        stage('Tests') {
+            parallel {
+                stage('Unit') {
+                    steps {
+                        catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
+                            bat '''
+                                set PYTHONPATH=%WORKSPACE%
+                                coverage run --branch --source=app --omit=app\\__init__.py,app\\api.py -m pytest --junitxml=result-unit.xml test\\unit
+                            '''
+                        }
+                        stash name: 'test-results', includes: 'result-unit.xml, .coverage'
                     }
                 }
 
-            stage('Tests')
-                {
-                parallel {
-
-                    stage('Unit') {
-                        steps {
-                            catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
-                                bat '''
-                                        set PYTHONPATH=%WORKSPACE%
-                                        coverage run --branch --source=app --omit=app\\__init__.py,app\\api.py -m pytest --junitxml=result-unit.xml test\\unit
-                                '''
-                            }
-                            
-                            stash name: 'test-results', includes: '.coverage'
-
-                        }
+                stage('Rest') {
+                    steps {
+                        bat '''
+                            set FLASK_APP=app\\api.py
+                            set FLASK_ENV=development
+                            start flask run
+                            start java -jar C:\\Users\\josor\\DevOps\\CPs\\wiremock\\wiremock-standalone-3.13.2.jar --port 9090 --root-dir test\\wiremock
+                            set PYTHONPATH=%WORKSPACE%
+                            pytest --junitxml=result-rest.xml test\\rest
+                        '''
                     }
-                    
-                    stage('Rest') {
-                        steps {
-                            bat '''
-                                set FLASK_APP=app\\api.py
-                                set FLASK_ENV=development
-                                start flask run
-                                start java -jar C:\\Users\\josor\\OneDrive\\Escritorio\\DevOps\\wiremock\\wiremock-standalone-3.13.2.jar --port 9090 --root-dir test\\wiremock
-                                set PYTHONPATH=%WORKSPACE%
-                                pytest --junitxml=result-rest.xml test\\rest
-                            '''
-                        }    
+                }
+
+                stage('Static') {
+                    steps {
+                        bat 'flake8 --exit-zero --format=pylint app 1>flake8.out'
+                        recordIssues tools: [flake8(name: 'Flake8', pattern: 'flake8.out')], 
+                                     qualityGates: [[threshold: 8, type: 'TOTAL', unstable: true], 
+                                                    [threshold: 10, type: 'TOTAL', unstable: false]]
                     }
+                }
 
-                    stage('Static'){
-                        steps{
-                             bat '''
-                                flake8 --exit-zero --format=pylint app >flake8.out
-                            '''
-                            recordIssues tools: [flake8(name: 'Flake8', pattern: 'flake8.out')], qualityGates: [[threshold:
-                                        8, type: 'TOTAL', unstable: true], [threshold: 10, type: 'TOTAL', unstable: false]]
-                        }
+                stage('Security') {
+                    steps {
+                        bat 'bandit --exit-zero -r . -f custom -o bandit.out --msg-template "{abspath}:{line}: [{test_id}] {msg}"'
+                        recordIssues tools: [pyLint(name: 'Bandit', pattern: 'bandit.out')], 
+                                     qualityGates: [[threshold: 2, type: 'TOTAL', unstable: true], 
+                                                    [threshold: 4, type: 'TOTAL', unstable: false]]
                     }
+                }
 
-                    stage('Security'){
-                        steps{
-                            bat '''
-                                bandit --exit-zero -r . -f custom -o bandit.out --msg-template "{abspath}:{line}: [{test_id}] {msg}"
-                            '''
-                            recordIssues tools: [pyLint(name: 'Bandit', pattern: 'bandit.out')], qualityGates: [[threshold:
-                                        2, type: 'TOTAL', unstable: true], [threshold: 4, type: 'TOTAL', unstable: false]]
-                        }
-                    }
-
-
-                    stage('Performance'){
+                stage('Performance'){
                         steps{
                             bat '''
                                 if exist flask.jtl del /f /q flask.jtl
                                 set FLASK_APP=app\\api.py
                                 set FLASK_ENV=development
-                                start flask
-                                C:\\Users\\OneDrive\\Escritorio\\DevOps\\apache-jmeter-5.6.3\\apache-jmeter-5.6.3\\bin\\jmeter -n -t test\\jmeter\\flask.jmx -f -l flask.jtl
+                                start flask run
+                                C:\\Users\\josor\\DevOps\\apache-jmeter-5.6.3\\apache-jmeter-5.6.3\\bin\\jmeter -n -t test\\jmeter\\flask.jmx -l flask.jtl
                             '''
 
                             perfReport sourceDataFiles: 'flask.jtl'
                         }
                     }
-                    
-                }
 
+ 
             }
+        }
 
-            stage('Coverage') {
-                steps {
-                    unstash 'test-results'
-                    
-                    catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
-                        bat '''
-                            coverage xml
-                            coverage report -m
-                        '''
-                    }
-                   recordCoverage qualityGates: [[integerThreshold: 95, metric: 'LINE', threshold: 95.0],
-                   [criticality: 'ERROR', integerThreshold: 85, metric: 'LINE', threshold: 85.0],
-                   [integerThreshold: 90, metric: 'BRANCH', threshold: 90.0], [criticality: 'ERROR', integerThreshold: 80, metric: 'BRANCH', threshold: 80.0]],
-                   tools: [[parser: 'COBERTURA', pattern: 'coverage.xml']] 
-                    
-            }
+        stage('Coverage') {
+            steps {
+                // El nombre debe coincidir exactamente con el del stash
+                unstash 'test-results'
 
+                catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
+                            bat 'coverage xml'
+                        }
+                
+                
+                recordCoverage qualityGates: [
+                        [integerThreshold: 95, metric: 'LINE', threshold: 95.0], 
+                        [criticality: 'ERROR', integerThreshold: 85, metric: 'LINE', threshold: 85.0],
+                        [integerThreshold: 90, metric: 'BRANCH', threshold: 90.0], 
+                        [criticality: 'ERROR', integerThreshold: 80, metric: 'BRANCH', threshold: 80.0]
+                    ],
+                    tools: [[parser: 'COBERTURA', pattern: 'coverage.xml']]
             }
-            
         }
     }
-
+}
         
 
 
