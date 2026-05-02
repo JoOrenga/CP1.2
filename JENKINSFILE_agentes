@@ -43,7 +43,6 @@ pipeline {
                     stage('Rest') {
                         agent { label 'wd2' }
                         steps {
-                            unstash 'source'
                             bat '''
                                 set FLASK_APP=app\\api.py
                                 set FLASK_ENV=development
@@ -59,6 +58,9 @@ pipeline {
                         steps {
                             bat '''
                                 if exist flask.jtl del /f /q flask.jtl
+                                set FLASK_APP=app\\api.py
+                                set FLASK_ENV=development
+                                start flask run
                                 C:\\Users\\josor\\DevOps\\apache-jmeter-5.6.3\\apache-jmeter-5.6.3\\bin\\jmeter -n -t test\\jmeter\\flask.jmx -l flask.jtl
                             '''
                             perfReport(
