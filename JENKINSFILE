@@ -63,7 +63,12 @@ pipeline {
                                 C:\\Users\\josor\\DevOps\\apache-jmeter-5.6.3\\apache-jmeter-5.6.3\\bin\\jmeter -n -t test\\jmeter\\flask.jmx -l flask.jtl
                             '''
 
-                            perfReport sourceDataFiles: 'flask.jtl'
+                            perfReport(
+                                    sourceDataFiles: 'flask.jtl',
+                                    filterRegex: '',
+                                    showTrendGraphs: true,
+                                    percentiles: '90', 
+                                )
                         }
                     }
 
