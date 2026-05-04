@@ -10,6 +10,7 @@ pipeline {
                         steps {
                             catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
                                 bat '''
+                                    echo STAGE: %STAGE_NAME% / AGENTE: %NODE_NAME%
                                     set PYTHONPATH=%WORKSPACE%
                                     coverage run --branch --source=app --omit=app\\__init__.py,app\\api.py -m pytest --junitxml=result-unit.xml test\\unit
                                 '''
@@ -22,7 +23,10 @@ pipeline {
                     steps {
                         unstash 'test-results'
                         catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
-                            bat 'coverage xml'
+                            bat '''
+                                echo STAGE: %STAGE_NAME% / AGENTE: %NODE_NAME%
+                                coverage xml
+                            '''
                         }
                         recordCoverage qualityGates: [
                                 [integerThreshold: 95, metric: 'LINE',   threshold: 95.0],
@@ -44,6 +48,7 @@ pipeline {
                         agent { label 'wd2' }
                         steps {
                             bat '''
+                                echo STAGE: %STAGE_NAME% / AGENTE: %NODE_NAME%
                                 set FLASK_APP=app\\api.py
                                 set FLASK_ENV=development
                                 start flask run
@@ -57,6 +62,7 @@ pipeline {
                         agent { label 'wd2' }
                         steps {
                             bat '''
+                                echo STAGE: %STAGE_NAME% / AGENTE: %NODE_NAME%
                                 if exist flask.jtl del /f /q flask.jtl
                                 set FLASK_APP=app\\api.py
                                 set FLASK_ENV=development
@@ -81,7 +87,10 @@ pipeline {
                     stage('Static') {
                         agent { label 'wd3' }
                         steps {
-                            bat 'flake8 --exit-zero --format=pylint app 1>flake8.out'
+                            bat '''
+                                echo STAGE: %STAGE_NAME% / AGENTE: %NODE_NAME%
+                                flake8 --exit-zero --format=pylint app 1>flake8.out
+                            '''
                             recordIssues tools: [flake8(name: 'Flake8', pattern: 'flake8.out')],
                                             qualityGates: [[threshold: 8,  type: 'TOTAL', unstable: true],
                                                         [threshold: 10, type: 'TOTAL', unstable: false]]
@@ -90,7 +99,10 @@ pipeline {
                     stage('Security') {
                         agent { label 'wd3' }
                         steps {
-                            bat 'bandit --exit-zero -r . -f custom -o bandit.out --msg-template "{abspath}:{line}: [{test_id}] {msg}"'
+                            bat '''
+                                echo STAGE: %STAGE_NAME% / AGENTE: %NODE_NAME%
+                                bandit --exit-zero -r . -f custom -o bandit.out --msg-template "{abspath}:{line}: [{test_id}] {msg}"
+                            '''
                             recordIssues tools: [pyLint(name: 'Bandit', pattern: 'bandit.out')],
                                             qualityGates: [[threshold: 2, type: 'TOTAL', unstable: true],
                                                         [threshold: 4, type: 'TOTAL', unstable: false]]
