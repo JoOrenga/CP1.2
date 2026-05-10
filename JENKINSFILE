@@ -2,14 +2,6 @@ pipeline {
     agent { label 'wd1' }
 
     stages {
-
-        stage('Clean') {
-            steps {
-                bat '''
-                    del /f /q result-*.xml .coverage coverage.xml flake8.out bandit.out flask.jtl 2>nul
-                '''
-                }
-        }
         
         stage('Tests') {
             parallel {
@@ -20,8 +12,9 @@ pipeline {
                                 set PYTHONPATH=%WORKSPACE%
                                 coverage run --branch --source=app --omit=app\\__init__.py,app\\api.py -m pytest --junitxml=result-unit.xml test\\unit
                             '''
+                            junit 'result-unit.xml'
                         }
-                        stash name: 'test-unit', includes: 'result-unit.xml, .coverage'
+                        stash name: 'coverage', includes: '.coverage'
                     }
                 }
 
@@ -35,8 +28,7 @@ pipeline {
                             set PYTHONPATH=%WORKSPACE%
                             pytest --junitxml=result-rest.xml test\\rest
                         '''
-                        unstash name: 'test-unit'
-                        junit 'result*.xml'
+                        junit 'result-rest.xml'
                     }
                 }
 
@@ -84,7 +76,7 @@ pipeline {
         stage('Coverage') {
             steps {
                 
-                unstash 'test-unit'
+                unstash 'coverage'
 
                 catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
                             bat 'coverage xml'
