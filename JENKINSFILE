@@ -75,8 +75,8 @@ pipeline {
 
         stage('Coverage') {
             steps {
-                // El nombre debe coincidir exactamente con el del stash
-                unstash 'test-results'
+                
+                unstash 'test-unit'
 
                 catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
                             bat 'coverage xml'
