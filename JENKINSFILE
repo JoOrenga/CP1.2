@@ -2,6 +2,14 @@ pipeline {
     agent { label 'wd1' }
 
     stages {
+
+        stage('Clean') {
+            steps {
+                bat '''
+                    del /f /q result-*.xml .coverage coverage.xml flake8.out bandit.out flask.jtl 2>nul
+                '''
+                }
+        }
         
         stage('Tests') {
             parallel {
