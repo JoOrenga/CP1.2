@@ -53,7 +53,6 @@ pipeline {
                 stage('Performance'){
                         steps{
                             bat '''
-                                if exist flask.jtl del /f /q flask.jtl
                                 set FLASK_APP=app\\api.py
                                 set FLASK_ENV=development
                                 start flask run
@@ -92,6 +91,15 @@ pipeline {
                     tools: [[parser: 'COBERTURA', pattern: 'coverage.xml']]
             }
         }
+
+        stage('Clean') {
+            steps {
+                bat '''
+                    del /f /q result-*.xml .coverage coverage.xml flask.jtl flake8.out bandit.out 2>nul
+                '''
+            }
+        }
+
     }
 }
         
