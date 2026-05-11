@@ -153,7 +153,19 @@ pipeline {
     post {
         always {
             node('wd1') {
-                bat 'rmdir /s /q "C:\\Users\\josor\\DevOps\\CPs\\workspace\\CP1\\Agentes"'
+                ws("C:\\Users\\josor\\DevOps\\CPs\\workspace\\CP1\\Agentes\\wd1") {
+                    cleanWs()
+                }
+            }
+            node('wd2') {
+                ws("C:\\Users\\josor\\DevOps\\CPs\\workspace\\CP1\\Agentes\\wd2") {
+                    cleanWs()
+                }
+            }
+            node('wd3') {
+                ws("C:\\Users\\josor\\DevOps\\CPs\\workspace\\CP1\\Agentes\\wd3") {
+                    cleanWs()
+                }
             }
         }
     }
