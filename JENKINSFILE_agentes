@@ -93,7 +93,35 @@ pipeline {
                     }
                 }
 
-                
+                 stage('Performance'){
+                    agent {
+                        node {
+                            label 'wd3'
+                            customWorkspace "C:\\Users\\josor\\DevOps\\CPs\\workspace\\CP1\\Agentes\\wd3"
+                        }
+                    }
+                    steps{
+                        checkout scm
+                        bat '''
+                            whoami
+                            hostname
+                            echo %WORKSPACE%
+                            echo STAGE: %STAGE_NAME% / AGENTE: %NODE_NAME%
+                            set FLASK_APP=app\\api.py
+                            set FLASK_ENV=development
+                            start flask run
+                            C:\\Users\\josor\\DevOps\\apache-jmeter-5.6.3\\apache-jmeter-5.6.3\\bin\\jmeter -n -t test\\jmeter\\flask.jmx -l flask.jtl
+                        '''
+
+                        perfReport(
+                                sourceDataFiles: 'flask.jtl',
+                                filterRegex: '',
+                                showTrendGraphs: true,
+                                percentiles: '90', 
+                            )
+                    }
+                }
+
                 
 
             }
