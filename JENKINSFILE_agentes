@@ -151,10 +151,10 @@ pipeline {
 
     }
     post {
-            always {
-                node('wd1') {
-                    bat 'del /s /q "C:\\Users\\josor\\DevOps\\CPs\\workspace\\CP1\\Agentes\\*.*"'
-                }
+        always {
+            node('wd1') {
+                bat 'rmdir /s /q "C:\\Users\\josor\\DevOps\\CPs\\workspace\\CP1\\Agentes"'
             }
         }
+    }
 }
