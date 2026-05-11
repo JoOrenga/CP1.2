@@ -3,12 +3,11 @@ pipeline {
 
     stages {
         
-        stage('Tests') {
+        stage('Tests1') {
             parallel {
                 stage('Unit') {
                     agent { label 'wd1' }
                     steps {
-                        checkout scm
                         catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
                             bat '''
                                 whoami
@@ -27,7 +26,6 @@ pipeline {
                 stage('Rest') {
                     agent { label 'wd2' }
                     steps {
-                        checkout scm
                         bat '''
                             whoami
                             hostname
@@ -47,7 +45,6 @@ pipeline {
                 stage('Static') {
                     agent { label 'wd3'}
                     steps {
-                        checkout scm
                         bat '''
                             whoami
                             hostname
@@ -60,28 +57,42 @@ pipeline {
                                                     [threshold: 10, type: 'TOTAL', unstable: false]]
                     }
                 }
+ 
+            }
+        }
 
-                stage('Security') {
-                    agent { label 'wd3'}
+        stage('Tests2') {
+            parallel {
+                stage('Coverage') {
+                    agent { label 'wd1'}
                     steps {
-                        checkout scm
                         bat '''
                             whoami
                             hostname
                             echo %WORKSPACE%
                             echo STAGE: %STAGE_NAME% / AGENTE: %NODE_NAME%
-                            bandit --exit-zero -r . -f custom -o bandit.out --msg-template "{abspath}:{line}: [{test_id}] {msg}"
                         '''
-                        recordIssues tools: [pyLint(name: 'Bandit', pattern: 'bandit.out')], 
-                                     qualityGates: [[threshold: 2, type: 'TOTAL', unstable: true], 
-                                                    [threshold: 4, type: 'TOTAL', unstable: false]]
+                        
+                        unstash 'coverage'
+
+                        catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
+                                    bat 'coverage xml'
+                                }
+                        
+                        
+                        recordCoverage qualityGates: [
+                                [integerThreshold: 95, metric: 'LINE', threshold: 95.0], 
+                                [criticality: 'ERROR', integerThreshold: 85, metric: 'LINE', threshold: 85.0],
+                                [integerThreshold: 90, metric: 'BRANCH', threshold: 90.0], 
+                                [criticality: 'ERROR', integerThreshold: 80, metric: 'BRANCH', threshold: 80.0]
+                            ],
+                            tools: [[parser: 'COBERTURA', pattern: 'coverage.xml']]
                     }
                 }
 
                 stage('Performance'){
                     agent { label 'wd2'}
                     steps{
-                        checkout scm
                         bat '''
                             whoami
                             hostname
@@ -102,41 +113,23 @@ pipeline {
                     }
                 }
 
- 
+                stage('Security') {
+                    agent { label 'wd3'}
+                    steps {
+                        bat '''
+                            whoami
+                            hostname
+                            echo %WORKSPACE%
+                            echo STAGE: %STAGE_NAME% / AGENTE: %NODE_NAME%
+                            bandit --exit-zero -r . -f custom -o bandit.out --msg-template "{abspath}:{line}: [{test_id}] {msg}"
+                        '''
+                        recordIssues tools: [pyLint(name: 'Bandit', pattern: 'bandit.out')], 
+                                     qualityGates: [[threshold: 2, type: 'TOTAL', unstable: true], 
+                                                    [threshold: 4, type: 'TOTAL', unstable: false]]
+                    }
+                }
             }
         }
-
-        
-
-        stage('Coverage') {
-            agent { label 'wd1'}
-            steps {
-
-                bat '''
-                    whoami
-                    hostname
-                    echo %WORKSPACE%
-                    echo STAGE: %STAGE_NAME% / AGENTE: %NODE_NAME%
-                '''
-                
-                unstash 'coverage'
-
-                catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
-                            bat 'coverage xml'
-                        }
-                
-                
-                recordCoverage qualityGates: [
-                        [integerThreshold: 95, metric: 'LINE', threshold: 95.0], 
-                        [criticality: 'ERROR', integerThreshold: 85, metric: 'LINE', threshold: 85.0],
-                        [integerThreshold: 90, metric: 'BRANCH', threshold: 90.0], 
-                        [criticality: 'ERROR', integerThreshold: 80, metric: 'BRANCH', threshold: 80.0]
-                    ],
-                    tools: [[parser: 'COBERTURA', pattern: 'coverage.xml']]
-            }
-        }
-
-
         
     }
 }
