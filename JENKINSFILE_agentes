@@ -43,7 +43,7 @@ pipeline {
                 }
 
                 stage('Static') {
-                    agent { label 'wd3' }
+                    agent { label 'wd3'}
                     steps {
                         bat '''
                             whoami
@@ -59,7 +59,7 @@ pipeline {
                 }
 
                 stage('Security') {
-                    agent { label 'wd3' }
+                    agent { label 'wd3'}
                     steps {
                         bat '''
                             whoami
@@ -74,8 +74,14 @@ pipeline {
                     }
                 }
 
-                stage('Performance'){
-                    agent { label 'wd2' }
+                
+
+ 
+            }
+        }
+
+        stage('Performance'){
+                    agent { label 'wd2'}
                         steps{
                             bat '''
                                 whoami
@@ -97,12 +103,8 @@ pipeline {
                         }
                     }
 
- 
-            }
-        }
-
         stage('Coverage') {
-            agent { label 'wd1' }
+            agent { label 'wd1'}
             steps {
 
                 bat '''
@@ -129,22 +131,12 @@ pipeline {
             }
         }
 
-        stage('Clean') {
-            agent any
-            steps {
-                bat '''
-                    whoami
-                    hostname
-                    echo %WORKSPACE%
-                    echo STAGE: %STAGE_NAME% / AGENTE: %NODE_NAME%
-                    cd %WORKSPACE%
-                    del /f /q result-*.xml .coverage coverage.xml flask.jtl flake8.out bandit.out 2>nul
-                '''
-            }
-        }
+        
     }
 }
         
+
+
 
 
 
