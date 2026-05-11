@@ -52,6 +52,31 @@ pipeline {
                     }
                 }
 
+                stage('Rest') {
+                    agent {
+                        node {
+                            label 'wd2'
+                            customWorkspace "C:\\Users\\josor\\DevOps\\CPs\\workspace\\CP1\\Agentes\\wd2"
+                        }
+                    }
+                    steps {
+                        checkout scm
+                        bat '''
+                            whoami
+                            hostname
+                            echo %WORKSPACE%
+                            echo STAGE: %STAGE_NAME% / AGENTE: %NODE_NAME%
+                            set FLASK_APP=app\\api.py
+                            set FLASK_ENV=development
+                            start flask run
+                            start java -jar C:\\Users\\josor\\DevOps\\CPs\\wiremock\\wiremock-standalone-3.13.2.jar --port 9090 --root-dir test\\wiremock
+                            set PYTHONPATH=%WORKSPACE%
+                            pytest --junitxml=result-rest.xml test\\rest
+                        '''
+                        junit 'result-rest.xml'
+                    }
+                }
+
                 stage('Security') {
                     agent {
                         node {
@@ -67,6 +92,8 @@ pipeline {
                                                     [threshold: 4, type: 'TOTAL', unstable: false]]
                     }
                 }
+
+                
                 
 
             }
