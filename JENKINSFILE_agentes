@@ -7,8 +7,12 @@ pipeline {
             parallel {
 
                 stage('Unit') {
-                    agent { label 'wd1' 
-                        customWorkspace "C:\\Users\\josor\\DevOps\\CPs\\workspace\\CP1\\Agentes\\wd1"}
+                    agent {
+                        node {
+                            label 'wd1'
+                            customWorkspace "C:\\Users\\josor\\DevOps\\CPs\\workspace\\CP1\\Agentes\\wd1"
+                        }
+                    }
                     steps {
                         checkout scm
                         catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
@@ -27,8 +31,12 @@ pipeline {
                 }
 
                 stage('Static') {
-                    agent { label 'wd1' 
-                        customWorkspace "C:\\Users\\josor\\DevOps\\CPs\\workspace\\CP1\\Agentes\\wd1"}
+                    agent {
+                        node {
+                            label 'wd1'
+                            customWorkspace "C:\\Users\\josor\\DevOps\\CPs\\workspace\\CP1\\Agentes\\wd1"
+                        }
+                    }
                     steps {
                         checkout scm
                         bat '''
@@ -45,8 +53,12 @@ pipeline {
                 }
 
                 stage('Security') {
-                    agent { label 'wd1' 
-                        customWorkspace "C:\\Users\\josor\\DevOps\\CPs\\workspace\\CP1\\Agentes\\wd2"}
+                    agent {
+                        node {
+                            label 'wd2'
+                            customWorkspace "C:\\Users\\josor\\DevOps\\CPs\\workspace\\CP1\\Agentes\\wd2"
+                        }
+                    }
                     steps {
                         checkout scm
                         bat 'bandit --exit-zero -r . -f custom -o bandit.out --msg-template "{abspath}:{line}: [{test_id}] {msg}"'
@@ -61,8 +73,12 @@ pipeline {
         }
 
         stage('Coverage') {
-            agent agent { label 'wd1' 
-                        customWorkspace "C:\\Users\\josor\\DevOps\\CPs\\workspace\\CP1\\Agentes\\wd1"}
+            agent {
+                node {
+                    label 'wd1'
+                    customWorkspace "C:\\Users\\josor\\DevOps\\CPs\\workspace\\CP1\\Agentes\\wd1"
+                }
+            }
             steps {
                 unstash 'coverage'
                 catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
