@@ -149,36 +149,10 @@ pipeline {
             }
         }
 
-        stage('Clean'){
-            parallel{
-                stage('Clean wd1') {
-                    agent {
-                        node {
-                            label 'wd1'
-                            customWorkspace "C:\\Users\\josor\\DevOps\\CPs\\workspace\\CP1\\Agentes\\wd1"
-                        }
-                    }
-                    steps { cleanWs() }
-                }
-
-                stage('Clean wd2') {
-                    agent {
-                        node {
-                            label 'wd2'
-                            customWorkspace "C:\\Users\\josor\\DevOps\\CPs\\workspace\\CP1\\Agentes\\wd2"
-                        }
-                    }
-                    steps { cleanWs() }
-                }
-
-                stage('Clean wd3') {
-                    agent {
-                        node {
-                            label 'wd3'
-                            customWorkspace "C:\\Users\\josor\\DevOps\\CPs\\workspace\\CP1\\Agentes\\wd3"
-                        }
-                    }
-                    steps { cleanWs() }
+        post {
+        always {
+            node('wd1') {
+                bat 'rmdir /s /q "C:\\Users\\josor\\DevOps\\CPs\\workspace\\CP1\\Agentes"'
                 }
             }
         }
