@@ -91,14 +91,14 @@ pipeline {
                     tools: [[parser: 'COBERTURA', pattern: 'coverage.xml']]
             }
         }
-
-        stage('Clean') {
-            steps {
-                bat '''
-                    del /f /q result-*.xml .coverage coverage.xml flask.jtl flake8.out bandit.out 2>nul
-                '''
-            }
+    }
+    post{
+        always{
+            cleanWs(
+                    deleteDirs: true,
+                    disableDeferredWipeout: true,
+                    notFailBuild: true
+                )
         }
-
     }
 }
