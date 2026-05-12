@@ -1,5 +1,5 @@
 pipeline {
-    agent none  // Sin agente global; cada stage declara el suyo
+    agent none 
 
     stages {
 
@@ -153,19 +153,25 @@ pipeline {
     post {
         always {
             node('wd1') {
-                ws("C:\\Users\\josor\\DevOps\\CPs\\workspace\\CP1\\Agentes\\wd1") {
-                    cleanWs()
-                }
+                cleanWs(
+                    deleteDirs: true,
+                    disableDeferredWipeout: true,
+                    notFailBuild: true
+                )
             }
             node('wd2') {
-                ws("C:\\Users\\josor\\DevOps\\CPs\\workspace\\CP1\\Agentes\\wd2") {
-                    cleanWs()
-                }
+                cleanWs(
+                    deleteDirs: true,
+                    disableDeferredWipeout: true,
+                    notFailBuild: true
+                )
             }
             node('wd3') {
-                ws("C:\\Users\\josor\\DevOps\\CPs\\workspace\\CP1\\Agentes\\wd3") {
-                    cleanWs()
-                }
+                cleanWs(
+                    deleteDirs: true,
+                    disableDeferredWipeout: true,
+                    notFailBuild: true
+                )
             }
         }
     }
