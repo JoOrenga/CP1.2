@@ -26,7 +26,6 @@ pipeline {
                             '''
                             junit 'result-unit.xml'
                         }
-                        stash name: 'coverage', includes: '.coverage'
                     }
                 }
 
@@ -135,7 +134,6 @@ pipeline {
                 }
             }
             steps {
-                unstash 'coverage'
                 catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
                     bat 'coverage xml'
                 }
