@@ -14,7 +14,7 @@ pipeline {
                         }
                     }
                     steps {
-                        checkout scm
+                        
                         catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
                             bat '''
                                 whoami
@@ -38,7 +38,7 @@ pipeline {
                         }
                     }
                     steps {
-                        checkout scm
+                        
                         bat '''
                             whoami
                             hostname
@@ -60,7 +60,7 @@ pipeline {
                         }
                     }
                     steps {
-                        checkout scm
+                        
                         bat '''
                             whoami
                             hostname
@@ -85,7 +85,7 @@ pipeline {
                         }
                     }
                     steps {
-                        checkout scm
+                        
                         bat 'bandit --exit-zero -r . -f custom -o bandit.out --msg-template "{abspath}:{line}: [{test_id}] {msg}"'
                         recordIssues tools: [pyLint(name: 'Bandit', pattern: 'bandit.out')],
                                      qualityGates: [[threshold: 2, type: 'TOTAL', unstable: true],
@@ -101,7 +101,7 @@ pipeline {
                         }
                     }
                     steps{
-                        checkout scm
+                        
                         bat '''
                             whoami
                             hostname
